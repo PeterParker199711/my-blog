@@ -344,4 +344,34 @@ export default {
 .toc-list li:hover {
     color: white;
 }
+
+/* 当屏幕宽度小于 1024px 时（平板和手机） */
+@media (max-width: 1024px) {
+    .blog-layout {
+        /* 1. 把三栏改成一栏，上下排列 */
+        grid-template-columns: 1fr;
+        height: auto;
+        /* 允许纵向撑开 */
+        overflow-y: visible;
+    }
+
+    /* 2. 隐藏左右边栏，或者让它们排在文章下方 */
+    .left-sidebar,
+    .right-sidebar {
+        display: none;
+        /* 手机端先隐藏，或者你可以改成 order: 2 排在后面 */
+    }
+
+    .main-content {
+        padding: 20px;
+        /* 缩小间距 */
+        border-radius: 0;
+        /* 手机端全屏感更强 */
+    }
+
+    .article-title {
+        font-size: 24px;
+        /* 调小标题字号 */
+    }
+}
 </style>
