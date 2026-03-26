@@ -140,7 +140,7 @@ const updateEffectPosition = (index: number) => {
   textRef.value.innerText = activeLi.innerText;
 };
 
-const handleClick = (e: Event, index: number) => {
+const handleClick = (_e: Event, index: number) => {
   if (activeIndex.value === index) return;
   activeIndex.value = index;
 
