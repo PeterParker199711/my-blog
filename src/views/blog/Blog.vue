@@ -50,12 +50,12 @@
 </template>
 
 <script>
+// 引入 Arco 的图标
+import { IconMenu, IconNav } from '@arco-design/web-vue/es/icon';
 import BlogHeader from './components/BlogHeader.vue';
 import BlogLeftSider from './components/BlogLeftSider.vue';
 import BlogMainContent from './components/BlogMainContent.vue';
 import BlogRightSider from './components/BlogRightSider.vue';
-// 引入 Arco 的图标
-import { IconMenu, IconNav } from '@arco-design/web-vue/es/icon';
 
 export default {
     name: 'Blog',
