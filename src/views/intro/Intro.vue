@@ -56,7 +56,11 @@ export default {
     data() {
         return {
             // 🚀 读取 Markdown 文件用于搜索
-            postModules: import.meta.glob('../../content/posts/*.md', { as: 'raw', eager: true }),
+            postModules: import.meta.glob('../../content/posts/*.md', {
+                query: '?raw',
+                import: 'default',
+                eager: true
+            }),
 
             navItems: [
                 { label: '首页', href: '/' },

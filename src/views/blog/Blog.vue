@@ -69,7 +69,11 @@ export default {
     },
     data() {
         return {
-            postModules: import.meta.glob('../../content/posts/*.md', { as: 'raw', eager: true }),
+            postModules: import.meta.glob('../../content/posts/*.md', {
+                query: '?raw',
+                import: 'default',
+                eager: true
+            }),
             activeTitle: '',
             activeContent: '',
             currentToc: [],

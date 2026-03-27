@@ -33,7 +33,11 @@ export default {
     components: { GooeyNav },
     data() {
         return {
-            postModules: import.meta.glob('../../content/posts/*.md', { as: 'raw', eager: true }),
+            postModules: import.meta.glob('../../content/posts/*.md', {
+                query: '?raw',
+                import: 'default',
+                eager: true
+            }),
             navItems: [
                 { label: '首页', href: '/' },
                 { label: '博客', href: '/blog' },

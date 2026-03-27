@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ] # 当代码推送到 main 分支时，自动触发打包
+    branches: [main] # 当代码推送到 main 分支时，自动触发打包
 
 # 设置权限，允许脚本把打包好的网页发布出去
 permissions:
@@ -23,8 +23,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 24
+          cache: "npm"
       - name: Install dependencies
         run: npm install # 安装依赖
       - name: Build
@@ -34,7 +34,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist' # Vite 默认打包出的文件夹叫 dist
+          path: "./dist" # Vite 默认打包出的文件夹叫 dist
 
   deploy:
     environment:
