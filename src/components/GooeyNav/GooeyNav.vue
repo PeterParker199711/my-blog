@@ -26,6 +26,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 interface GooeyNavItem {
   label: string;
@@ -140,8 +143,10 @@ const updateEffectPosition = (index: number) => {
   textRef.value.innerText = activeLi.innerText;
 };
 
-const handleClick = (_e: Event, index: number) => {
+const handleClick = (e: Event, index: number) => {
   if (activeIndex.value === index) return;
+
+  const targetItem = props.items[index];
   activeIndex.value = index;
 
   updateEffectPosition(index);
@@ -157,6 +162,10 @@ const handleClick = (_e: Event, index: number) => {
     void textRef.value.offsetWidth;
     textRef.value.classList.add('active');
   }
+
+  if (targetItem.href) {
+    router.push(targetItem.href);
+  }
 };
 
 const handleKeyDown = (e: KeyboardEvent, index: number) => {
@@ -166,17 +175,45 @@ const handleKeyDown = (e: KeyboardEvent, index: number) => {
   }
 };
 
+// 🚀 核心新增：根据当前网址智能匹配激活项
+const initActiveState = () => {
+  const currentPath = window.location.pathname;
+  const index = props.items.findIndex(item => {
+    if (!item.href) return false;
+    if (item.href === '/') return currentPath === '/'; // 首页严格匹配
+    return currentPath.startsWith(item.href); // 其他页面如 /blog/xxx 模糊匹配
+  });
+
+  if (index !== -1) {
+    activeIndex.value = index;
+  }
+};
+
 watch(activeIndex, (newIndex) => {
   updateEffectPosition(newIndex);
   textRef.value?.classList.add('active');
 });
 
 onMounted(() => {
+  // 1. 初始化匹配当前路径
+  initActiveState();
+
+  // 2. 使用 nextTick 确保布局已经稳定
   setTimeout(() => {
     updateEffectPosition(activeIndex.value);
-    textRef.value?.classList.add('active');
-  }, 50);
 
+    // 强制给滤镜层和文字层加上 active 类
+    if (filterRef.value) {
+      filterRef.value.classList.add('active');
+      filterRef.value.style.opacity = '1'; // 确保可见
+    }
+    if (textRef.value) {
+      textRef.value.classList.add('active');
+      textRef.value.style.opacity = '1';
+    }
+  }, 100); // 稍微给浏览器一点喘息时间，100ms 是视觉黄金分割点
+
+  // 3. 监听窗口缩放，防止胶囊跑偏
   resizeObserver = new ResizeObserver(() => {
     updateEffectPosition(activeIndex.value);
   });
@@ -191,6 +228,7 @@ onUnmounted(() => {
   }
 });
 </script>
+
 <style>
 /* 1. 全局颜色变量与缓动曲线 */
 :root {
@@ -260,6 +298,8 @@ onUnmounted(() => {
 /* 跟随滑动的背景与粒子容器 */
 .effect.filter {
   z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 5. 白色胶囊背景滑块 */
@@ -273,6 +313,7 @@ onUnmounted(() => {
   opacity: 0;
   z-index: -1;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  opacity: 1;
 }
 
 .effect.active::after {

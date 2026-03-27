@@ -1,8 +1,8 @@
 <template>
   <div class="app-container">
     <div class="background-layer">
-      <Aurora :color-stops="['#00FFFF', '#F0E68C', '#FFC0CB']" :amplitude="1.0" :blend="0.5" :speed="0.8"
-        class="aurora-bg" />
+      <!-- <Aurora :color-stops="['#00FFFF', '#F0E68C', '#FFC0CB']" :amplitude="1.0" :blend="0.5" :speed="0.8"
+        class="aurora-bg" /> -->
     </div>
 
     <router-view v-slot="{ Component }">

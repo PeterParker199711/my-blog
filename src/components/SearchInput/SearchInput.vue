@@ -2,35 +2,46 @@
     <div class="search-wrapper">
         <div class="search-container" :class="{ focused: isFocused }">
             <div class="search-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
             </div>
 
-            <input type="text" v-model="query" :placeholder="placeholder" @focus="isFocused = true"
-                @blur="isFocused = false" @keyup.enter="handleSearch" />
-
-            <div class="search-suffix">
-                <span v-if="!query" class="kdb-hint">⌘ K</span>
-                <button v-else @click="query = ''" class="clear-btn">✕</button>
-            </div>
+            <input type="text" v-model="query" :placeholder="placeholder" @focus="handleFocus" @blur="handleBlur" />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
-defineProps<{ placeholder?: string }>();
-const emit = defineEmits(['search']);
+const props = defineProps<{ placeholder?: string }>();
+const emit = defineEmits(['search', 'clear', 'focus']); // 🚀 新增 focus 事件
 
 const query = ref('');
 const isFocused = ref(false);
+let timer: any = null;
 
-const handleSearch = () => {
-    emit('search', query.value);
+const handleFocus = () => {
+    isFocused.value = true;
+    // 🚀 当重新聚焦且有内容时，立刻触发搜索，让面板出来
+    if (query.value) {
+        emit('focus', query.value);
+    }
 };
+
+const handleBlur = () => {
+    isFocused.value = false;
+};
+
+watch(query, (newVal) => {
+    if (!newVal) {
+        emit('clear');
+        if (timer) clearTimeout(timer);
+        return;
+    }
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+        emit('search', newVal);
+    }, 200);
+});
 </script>
 
 <style scoped>

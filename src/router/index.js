@@ -1,22 +1,16 @@
+// router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
-import Intro from '../views/intro/Intro.vue'
-import Blog from '../views/blog/Blog.vue'
-// 导入你的 404 页面
-import NotFound from '../components/404NotFound/404NotFound.vue'
+
+const routes = [
+    { path: '/', name: 'Intro', component: () => import('../views/intro/Intro.vue') },
+    { path: '/blog', name: 'Blog', component: () => import('../views/blog/Blog.vue') },
+    { path: '/archive', name: 'Archive', component: () => import('../views/archive/Archive.vue') },
+    { path: '/about', name: 'About', component: () => import('../views/about/About.vue') },
+]
 
 const router = createRouter({
-    history: createWebHistory(),
-    routes: [
-        { path: '/', name: 'Intro', component: Intro },
-        { path: '/blog', name: 'Blog', component: Blog },
-
-        // 👇 这一段必须放在最后！捕获所有未匹配的路径
-        {
-            path: '/:pathMatch(.*)*',
-            name: 'NotFound',
-            component: NotFound
-        }
-    ]
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes
 })
 
 export default router

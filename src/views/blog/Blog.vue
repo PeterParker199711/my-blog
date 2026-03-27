@@ -1,377 +1,338 @@
 <template>
-    <div class="blog-page">
-        <main class="content-layer">
-            <header class="header">
-                <GooeyNav :items="navItems" :particle-count="5" :particle-distances="[122, 30]" />
-            </header>
+    <div class="blog-view-root">
+        <a-layout class="transparent-layout">
+            <a-layout-header>
+                <BlogHeader />
+            </a-layout-header>
 
-            <section class="blog-layout">
-                <aside class="glass-panel left-sidebar">
-                    <h2 class="panel-title">探索</h2>
-                    <ul class="category-list">
-                        <li v-for="cat in categories" :key="cat"
-                            :class="['category-item', { active: currentCategory === cat }]"
-                            @click="currentCategory = cat">
-                            {{ cat }}
-                        </li>
-                    </ul>
-                    <div class="divider"></div>
-                    <div class="article-list">
-                        <div v-for="article in articles" :key="article.id" class="article-card">
-                            <span class="date">{{ article.date }}</span>
-                            <h3>{{ article.title }}</h3>
-                        </div>
-                    </div>
-                </aside>
+            <a-layout-content class="blog-content-body">
 
-                <article class="glass-panel main-content">
-                    <div class="article-header">
-                        <span class="tag">前端开发</span>
-                        <h1 class="article-title">Vue3 组合式 API 高级应用指南</h1>
-                        <div class="article-meta">发布于 2023-10-24 · 作者 Flower</div>
-                    </div>
-                    <div class="article-body">
-                        <MarkdownViewer :content="mockMarkdown" />
-                    </div>
-                </article>
+                <div class="mobile-action-bar" v-if="isMobile">
+                    <a-button type="primary" shape="round" class="glass-btn" @click="leftDrawerVisible = true">
+                        <template #icon><icon-menu /></template>
+                        文章列表
+                    </a-button>
+                    <a-button type="primary" shape="round" class="glass-btn" @click="rightDrawerVisible = true">
+                        章节目录
+                        <template #icon><icon-nav /></template>
+                    </a-button>
+                </div>
 
-                <aside class="glass-panel right-sidebar">
-                    <div class="author-card">
-                        <div class="avatar">👨‍💻</div>
-                        <h3>Flower</h3>
-                        <p>前端工程师 / 设计爱好者</p>
-                        <div class="social-links">
-                            <span class="icon">GH</span>
-                            <span class="icon">TW</span>
-                            <span class="icon">WX</span>
-                        </div>
+                <div class="blog-grid-system" :class="{ 'is-mobile': isMobile }">
+                    <div class="desktop-sider" v-show="!isMobile">
+                        <BlogLeftSider :articles="filteredArticles" @select="onArticleChange"
+                            @category-change="handleCategoryChange" />
                     </div>
-                    <div class="divider"></div>
-                    <h2 class="panel-title">当前目录</h2>
-                    <ul class="toc-list">
-                        <li>响应式原理解析</li>
-                        <li>依赖注入实战</li>
-                        <li>性能优化技巧</li>
-                    </ul>
-                </aside>
-            </section>
-        </main>
+
+                    <BlogMainContent :title="activeTitle" :content="activeContent" :meta="activeMeta" />
+
+                    <div class="desktop-sider" v-show="!isMobile">
+                        <BlogRightSider :tocList="currentToc" />
+                    </div>
+                </div>
+            </a-layout-content>
+        </a-layout>
+
+
+        <a-drawer class="blog-drawer" :visible="leftDrawerVisible" placement="left" :width="300" :footer="false"
+            @cancel="leftDrawerVisible = false" unmountOnClose>
+            <template #title>探索文章</template>
+            <BlogLeftSider :articles="filteredArticles" @select="onMobileArticleChange"
+                @category-change="handleCategoryChange" />
+        </a-drawer>
+
+        <a-drawer class="blog-drawer" :visible="rightDrawerVisible" placement="right" :width="300" :footer="false"
+            @cancel="rightDrawerVisible = false" unmountOnClose>
+            <template #title>当前目录</template>
+            <BlogRightSider :tocList="currentToc" />
+        </a-drawer>
     </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import GooeyNav from '../../components/GooeyNav/GooeyNav.vue'
-import MarkdownViewer from '../../components/MarkdownViewer/MarkdownViewer.vue'
-
-const navItems = [
-    { label: '首页', href: '/' },
-    { label: '博客', href: '/blog' },
-    { label: '关于', href: '/about' }
-]
-
-const categories = ['全部', '前端开发', '生活随笔', '设计资源']
-const currentCategory = ref('前端开发')
-
-const articles = [
-    { id: 1, title: '2023 前端技术栈盘点', date: '10-24' },
-    { id: 2, title: '如何设计一个完美的暗黑模式', date: '10-18' },
-    { id: 3, title: 'Tailwind CSS 高阶玩法', date: '09-05' },
-    { id: 4, title: '我的第一篇博客', date: '08-12' },
-]
-
-// 模拟的 Markdown 数据测试排版
-const mockMarkdown = `
-## 1. 为什么选择 Composition API？
-
-在 Vue 2 中，我们习惯了使用 Options API（配置项 API）。但在大型项目中，\`data\`、\`methods\` 和 \`computed\` 的分离往往会导致**逻辑碎片化**。
-
-> "Composition API 的核心目的，就是把相同功能的代码聚合在一起。"
-
-### 代码示例
-
-下面是一个简单的 \`ref\` 和 \`computed\` 的使用示例：
-
-\`\`\`javascript
-import { ref, computed } from 'vue'
+<script>
+import BlogHeader from './components/BlogHeader.vue';
+import BlogLeftSider from './components/BlogLeftSider.vue';
+import BlogMainContent from './components/BlogMainContent.vue';
+import BlogRightSider from './components/BlogRightSider.vue';
+// 引入 Arco 的图标
+import { IconMenu, IconNav } from '@arco-design/web-vue/es/icon';
 
 export default {
-  setup() {
-    const count = ref(0)
-    const doubleCount = computed(() => count.value * 2)
+    name: 'Blog',
+    components: {
+        BlogHeader,
+        BlogLeftSider,
+        BlogMainContent,
+        BlogRightSider,
+        IconMenu,
+        IconNav
+    },
+    data() {
+        return {
+            postModules: import.meta.glob('../../content/posts/*.md', { as: 'raw', eager: true }),
+            activeTitle: '',
+            activeContent: '',
+            currentToc: [],
+            activeMeta: {},
+            articles: [],
+            currentCategory: '全部',
 
-    const increment = () => {
-      count.value++
+            // 🚀 移动端适配相关的状态
+            isMobile: false,
+            leftDrawerVisible: false,
+            rightDrawerVisible: false,
+        }
+    },
+    computed: {
+        filteredArticles() {
+            if (this.currentCategory === '全部') {
+                return this.articles;
+            }
+            return this.articles.filter(article => article.tag === this.currentCategory);
+        }
+    },
+    mounted() {
+        this.initData();
+
+        // 🚀 监听屏幕大小变化
+        this.checkMobile();
+        window.addEventListener('resize', this.checkMobile);
+    },
+    beforeUnmount() {
+        // 组件销毁时移除监听，防止内存泄漏
+        window.removeEventListener('resize', this.checkMobile);
+    },
+    methods: {
+        checkMobile() {
+            // 当屏幕宽度小于 1200px 时，认为是移动端（或小屏幕平板）
+            this.isMobile = window.innerWidth <= 1200;
+        },
+
+        // 移动端专属：点击文章后，自动收起左侧抽屉，方便直接阅读
+        onMobileArticleChange(article) {
+            this.onArticleChange(article);
+            this.leftDrawerVisible = false;
+        },
+
+        initData() {
+            const list = Object.keys(this.postModules).map((path, index) => {
+                const rawContent = this.postModules[path] || '';
+                const fmMatch = rawContent.match(/---\r?\n([\s\S]*?)\r?\n---/);
+
+                let title = path.split('/').pop().replace('.md', '');
+                let date = '未知日期';
+                let tag = '未分类';
+
+                if (fmMatch) {
+                    const fmString = fmMatch[1];
+                    const titleMatch = fmString.match(/title:\s*([^\r\n]*)/);
+                    const dateMatch = fmString.match(/date:\s*([^\r\n]*)/);
+                    const tagMatch = fmString.match(/tag:\s*([^\r\n]*)/);
+
+                    if (titleMatch) title = titleMatch[1].trim();
+                    if (dateMatch) date = dateMatch[1].trim();
+                    if (tagMatch) tag = tagMatch[1].trim();
+                }
+
+                return { id: index, title, path, date, tag, rawContent };
+            });
+
+            this.articles = list;
+            if (list.length > 0) this.onArticleChange(list[0]);
+        },
+
+        onArticleChange(article) {
+            this.activeTitle = article.title;
+            this.activeMeta = {
+                date: article.date || '未知日期',
+                tag: article.tag || '未分类'
+            };
+
+            const contentBody = article.rawContent.replace(/---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
+            this.activeContent = contentBody;
+
+            const headingRegex = /^(#{2,3})\s+(.*)/gm;
+            const toc = [];
+            let match;
+            while ((match = headingRegex.exec(contentBody)) !== null) {
+                const rawText = match[2].trim();
+                const safeId = 'heading-' + rawText.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
+                toc.push({ id: safeId, text: rawText });
+            }
+            this.currentToc = toc;
+        },
+
+        handleCategoryChange(category) {
+            this.currentCategory = category;
+            const newList = this.filteredArticles;
+            if (newList.length > 0) {
+                this.onArticleChange(newList[0]);
+            } else {
+                this.activeTitle = '';
+                this.activeContent = '';
+                this.activeMeta = {};
+                this.currentToc = [];
+            }
+        }
     }
-
-    return { count, doubleCount, increment }
-  }
 }
-\`\`\`
-
-你可以发现，它让代码更加灵活了！这在处理复杂的组件时，比如我们目前正在封装的 \`MarkdownViewer\`，体验极佳。
-`
 </script>
 
 <style scoped>
-/* ================= 基础布局 ================= */
-.blog-page {
+.blog-view-root {
     width: 100%;
-    height: 100vh;
-    position: relative;
-    background: transparent;
-    /* 背景透明，透出 App.vue 里的极光 */
-    overflow: hidden;
-    color: white;
+    min-height: 100vh;
+    background-color: #0a0c10;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-position: center center;
 }
 
-.content-layer {
-    position: relative;
-    z-index: 10;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+.transparent-layout {
+    background: transparent !important;
 }
 
-.header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 80px;
-    flex-shrink: 0;
-}
-
-/* ================= 三栏结构 ================= */
-.blog-layout {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 280px 1fr 280px;
-    gap: 24px;
-    max-width: 1440px;
-    width: 100%;
+.blog-content-body {
+    padding: 0 40px 40px;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 0 24px 24px 24px;
-    height: calc(100vh - 80px);
+    width: 100%;
 }
 
-/* ================= 毛玻璃面板 ================= */
-.glass-panel {
-    background: rgba(20, 20, 20, 0.4);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    padding: 24px;
-    overflow-y: auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.glass-panel::-webkit-scrollbar {
-    width: 4px;
-}
-
-.glass-panel::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-}
-
-/* ================= 组件复用样式 ================= */
-.panel-title {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 16px;
-}
-
-.divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 20px 0;
-}
-
-/* ---------- 左侧：分类与文章 ---------- */
-.category-list {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.category-item {
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.category-item:hover,
-.category-item.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
-.article-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.article-card {
-    padding: 12px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.article-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.article-card .date {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.4);
-    margin-bottom: 4px;
-    display: block;
-}
-
-.article-card h3 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1.4;
-}
-
-/* ---------- 中间：文章正文 ---------- */
-.main-content {
-    background: rgba(10, 10, 10, 0.6);
-    padding: 40px;
-}
-
-.article-header {
-    margin-bottom: 40px;
-}
-
-.article-header .tag {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    background: rgba(0, 255, 255, 0.1);
-    color: #00FFFF;
-    font-size: 12px;
-    margin-bottom: 16px;
-}
-
-.article-title {
-    font-size: 36px;
-    margin: 0 0 16px 0;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.article-meta {
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 14px;
-}
-
-/* ---------- 右侧：名片与目录 ---------- */
-.author-card {
-    text-align: center;
-}
-
-.avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #00FFFF, #FFC0CB);
-    margin: 0 auto 16px;
+.blog-grid-system {
     display: grid;
-    place-items: center;
-    font-size: 32px;
+    grid-template-columns: 300px 1fr 300px;
+    gap: 20px;
+    width: 100%;
+    align-items: start;
 }
 
-.author-card h3 {
-    margin: 0 0 8px 0;
-    font-size: 20px;
-}
-
-.author-card p {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
-    margin: 0 0 16px 0;
-}
-
-.social-links {
+/* 🚀 移动端顶部悬浮操作栏 */
+.mobile-action-bar {
     display: flex;
-    justify-content: center;
-    gap: 12px;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 5px;
 }
 
-.icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    display: grid;
-    place-items: center;
-    font-size: 12px;
-    cursor: pointer;
-    transition: 0.2s;
+.glass-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px);
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.icon:hover {
-    background: white;
-    color: black;
+.glass-btn:active {
+    background: rgba(0, 255, 255, 0.2) !important;
+    border-color: #00FFFF !important;
+    color: #00FFFF !important;
 }
 
-.toc-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+/* 1. 改变抽屉主体底色 */
+:deep(.arco-drawer) {
+    background-color: #0d0f14 !important;
+    /* 稍微比背景深一点的颜色 */
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.toc-list li {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
-    padding: 8px 0;
-    cursor: pointer;
-    transition: color 0.2s;
+/* 2. 改变抽屉头部样式 */
+:deep(.arco-drawer-header) {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.toc-list li:hover {
-    color: white;
+/* 3. 改变标题文字颜色 */
+:deep(.arco-drawer-title) {
+    color: #00FFFF !important;
+    /* 用咱们的青色作为标题，更好看 */
+    font-size: 16px;
+    font-weight: 600;
 }
 
-/* 当屏幕宽度小于 1024px 时（平板和手机） */
-@media (max-width: 1024px) {
-    .blog-layout {
-        /* 1. 把三栏改成一栏，上下排列 */
+/* 4. 改变关闭按钮颜色 */
+:deep(.arco-drawer-close-btn) {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+:deep(.arco-drawer-close-btn:hover) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* 5. 改变抽屉内部内容区（这里最关键，去掉白色背景） */
+:deep(.arco-drawer-body) {
+    background-color: transparent !important;
+    padding: 20px 15px !important;
+}
+
+/* 6. 顺便把里面的卡片背景也调透明，让分类标签直接浮在抽屉上 */
+:deep(.arco-drawer .glass-card) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+/* 移动端适配 */
+@media (max-width: 1200px) {
+    .blog-content-body {
+        padding: 0 20px 20px;
+        /* 手机上缩小一点边距 */
+    }
+
+    .blog-grid-system {
         grid-template-columns: 1fr;
-        height: auto;
-        /* 允许纵向撑开 */
-        overflow-y: visible;
+        /* 变成单列，只有中间的文章区！ */
     }
 
-    /* 2. 隐藏左右边栏，或者让它们排在文章下方 */
-    .left-sidebar,
-    .right-sidebar {
-        display: none;
-        /* 手机端先隐藏，或者你可以改成 order: 2 排在后面 */
+    .desktop-sider {
+        display: none !important;
+        /* 彻底隐藏原本因为堆叠而导致变长的侧边栏 */
     }
+}
+</style>
 
-    .main-content {
-        padding: 20px;
-        /* 缩小间距 */
-        border-radius: 0;
-        /* 手机端全屏感更强 */
-    }
+<style>
+/* 针对带 blog-drawer 类的抽屉进行全局暗黑化 */
+.blog-drawer .arco-drawer {
+    background-color: #0d0f14 !important;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
 
-    .article-title {
-        font-size: 24px;
-        /* 调小标题字号 */
-    }
+.blog-drawer .arco-drawer-header {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.blog-drawer .arco-drawer-title {
+    color: #00FFFF !important;
+}
+
+.blog-drawer .arco-drawer-body {
+    background-color: transparent !important;
+}
+
+/* 顺便把抽屉里的文字也调亮，防止看不清 */
+.blog-drawer .panel-label {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* 按钮和卡片的覆盖 */
+.blog-drawer .glass-card {
+    background: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+}
+
+/* 针对侧边栏列表文字的优化 */
+.blog-drawer .item-title {
+    color: #fff !important;
 }
 </style>
