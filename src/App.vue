@@ -10,6 +10,7 @@
 </script>
 
 <style>
+@import './publicstyle/BlogGlobal.css';
 /* 全局基础重置 */
 body,
 html {
