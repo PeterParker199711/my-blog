@@ -1,50 +1,89 @@
 <template>
     <div class="search-wrapper">
         <div class="search-container" :class="{ focused: isFocused }">
-            <div class="search-icon">
-            </div>
+            <div class="search-icon"></div>
 
-            <input type="text" v-model="query" :placeholder="placeholder" @focus="handleFocus" @blur="handleBlur" />
+            <input type="text" v-model="query" ref="searchInput" :placeholder="placeholder" @focus="handleFocus"
+                @blur="handleBlur" />
+
+            <div class="search-suffix">
+                <button v-if="query" class="clear-btn" @mousedown.prevent="clearContent" title="清空搜索">
+                    ✕
+                </button>
+            </div>
         </div>
     </div>
 </template>
 
-<script setup lang="ts">
-import { ref, watch } from 'vue';
+<script>
+export default {
+    name: 'SearchInput',
+    // 1. 接收父组件传来的属性
+    props: {
+        placeholder: {
+            type: String,
+            default: ''
+        }
+    },
+    // 2. 响应式数据存放在 data 中
+    data() {
+        return {
+            query: '',
+            isFocused: false,
+            timer: null // 用于防抖的计时器
+        }
+    },
+    // 3. 监听 query 的变化实现防抖搜索
+    watch: {
+        query(newVal) {
+            if (!newVal) {
+                // 如果为空，告诉父组件清空列表
+                this.$emit('clear');
+                if (this.timer) clearTimeout(this.timer);
+                return;
+            }
 
-const props = defineProps<{ placeholder?: string }>();
-const emit = defineEmits(['search', 'clear', 'focus']); // 🚀 新增 focus 事件
+            // ⚡️ 防抖处理：200ms 后再执行搜索
+            if (this.timer) clearTimeout(this.timer);
+            this.timer = setTimeout(() => {
+                this.$emit('search', newVal);
+            }, 200);
+        }
+    },
+    // 4. 所有方法都放在 methods 里
+    methods: {
+        handleFocus() {
+            this.isFocused = true;
+            // 当重新聚焦且有内容时，立刻触发 focus 事件，让面板重新弹出来
+            if (this.query) {
+                this.$emit('focus', this.query);
+            }
+        },
 
-const query = ref('');
-const isFocused = ref(false);
-let timer: any = null;
+        handleBlur() {
+            // 💡 贴心小细节：稍微延迟失去焦点
+            // 防止你还没点到清空按钮，输入框就先 blur 导致面板消失了
+            setTimeout(() => {
+                this.isFocused = false;
+            }, 150);
+        },
 
-const handleFocus = () => {
-    isFocused.value = true;
-    // 🚀 当重新聚焦且有内容时，立刻触发搜索，让面板出来
-    if (query.value) {
-        emit('focus', query.value);
+        // 🚀 新增的清空方法
+        clearContent() {
+            this.query = '';
+            // 强制把光标按回输入框
+            this.$nextTick(() => {
+                if (this.$refs.searchInput) {
+                    this.$refs.searchInput.focus();
+                }
+            });
+        }
     }
-};
-
-const handleBlur = () => {
-    isFocused.value = false;
-};
-
-watch(query, (newVal) => {
-    if (!newVal) {
-        emit('clear');
-        if (timer) clearTimeout(timer);
-        return;
-    }
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-        emit('search', newVal);
-    }, 200);
-});
+}
 </script>
 
 <style scoped>
+/* 样式部分保持你原本的设计，一点都没变！ */
 .search-wrapper {
     width: 100%;
     max-width: 600px;
@@ -97,11 +136,35 @@ input::placeholder {
     border-radius: 4px;
 }
 
+
+/* 🚀 补上缺失的容器样式，让按钮变得好点 */
+.search-suffix {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    /* 给按钮留出固定的呼吸空间 */
+}
+
+/* 稍微优化一下你的清空按钮样式 */
 .clear-btn {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.clear-btn:hover {
+    color: #ff4d4f;
+    /* 悬浮变成红色警示 */
+    transform: rotate(90deg) scale(1.1);
+    /* 鼠标放上去有一个帅气的旋转放大 */
 }
 </style>

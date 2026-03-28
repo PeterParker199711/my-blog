@@ -28,38 +28,38 @@ export default {
         this.loadGiscus();
     },
     methods: {
-        loadGiscus() {
-            const container = this.$refs.commentRef;
-            if (!container) return;
+        // loadGiscus() {
+        //     const container = this.$refs.commentRef;
+        //     if (!container) return;
 
-            // 每次加载前先清空上一个文章的评论
-            container.innerHTML = '';
+        //     // 每次加载前先清空上一个文章的评论
+        //     container.innerHTML = '';
 
-            // 动态创建并插入 Giscus 脚本
-            const script = document.createElement('script');
-            script.src = "https://giscus.app/client.js";
+        //     // 动态创建并插入 Giscus 脚本
+        //     const script = document.createElement('script');
+        //     script.src = "https://giscus.app/client.js";
 
-            // ⚠️ 下面这两行需要换成你自己的 GitHub 仓库！这里先用一个公共的测试仓库占位
-            script.setAttribute('data-repo', "laymonage/giscus-test");
-            script.setAttribute('data-repo-id', "MDEwOlJlcG9zaXRvcnkzNjc1MzkxMjI=");
-            script.setAttribute('data-category', "General");
-            script.setAttribute('data-category-id', "DIC_kwDOFekyMs4CQA_C");
+        //     // ⚠️ 下面这两行需要换成你自己的 GitHub 仓库！这里先用一个公共的测试仓库占位
+        //     script.setAttribute('data-repo', "laymonage/giscus-test");
+        //     script.setAttribute('data-repo-id', "MDEwOlJlcG9zaXRvcnkzNjc1MzkxMjI=");
+        //     script.setAttribute('data-category', "General");
+        //     script.setAttribute('data-category-id', "DIC_kwDOFekyMs4CQA_C");
 
-            // 让评论区和“文章标题”绑定
-            script.setAttribute('data-mapping', "title");
-            script.setAttribute('data-strict', "0");
-            script.setAttribute('data-reactions-enabled', "1"); // 允许点赞表情
-            script.setAttribute('data-emit-metadata', "0");
-            script.setAttribute('data-input-position', "bottom");
+        //     // 让评论区和“文章标题”绑定
+        //     script.setAttribute('data-mapping', "title");
+        //     script.setAttribute('data-strict', "0");
+        //     script.setAttribute('data-reactions-enabled', "1"); // 允许点赞表情
+        //     script.setAttribute('data-emit-metadata', "0");
+        //     script.setAttribute('data-input-position', "bottom");
 
-            // 透明暗黑模式
-            script.setAttribute('data-theme', "transparent_dark");
-            script.setAttribute('data-lang', "zh-CN");
-            script.setAttribute('crossorigin', "anonymous");
-            script.async = true;
+        //     // 透明暗黑模式
+        //     script.setAttribute('data-theme', "transparent_dark");
+        //     script.setAttribute('data-lang', "zh-CN");
+        //     script.setAttribute('crossorigin', "anonymous");
+        //     script.async = true;
 
-            container.appendChild(script);
-        }
+        //     container.appendChild(script);
+        // }
     }
 }
 </script>

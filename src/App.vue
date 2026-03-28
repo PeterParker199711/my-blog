@@ -1,20 +1,12 @@
 <template>
   <div class="app-container">
-    <div class="background-layer">
-      <!-- <Aurora :color-stops="['#00FFFF', '#F0E68C', '#FFC0CB']" :amplitude="1.0" :blend="0.5" :speed="0.8"
-        class="aurora-bg" /> -->
-    </div>
-
-    <router-view v-slot="{ Component }">
-      <transition name="page-fade" mode="out-in">
-        <component :is="Component" />
-      </transition>
+    <router-view v-slot="{ Component, route }">
+      <component :is="Component" :key="route.path" />
     </router-view>
   </div>
 </template>
 
 <script setup>
-import Aurora from './components/Aurora/Aurora.vue'
 </script>
 
 <style>

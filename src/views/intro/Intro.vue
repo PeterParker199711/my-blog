@@ -3,12 +3,12 @@
         <main class="content-layer">
             <header class="header">
                 <div class="nav-container">
-                    <GooeyNav :items="navItems" :particle-count="5" :particle-distances="[122, 30]" />
+                    <GooeyNav :items="navItems" :particle-count="5" :particle-distances="[122, 10]" />
                 </div>
             </header>
 
             <section class="hero-section" :class="{ 'is-searching': searchResultVisible }">
-                <h1 class="main-title">SHOW TIME</h1>
+                <h1 class="main-title">show time</h1>
 
                 <div class="search-wrap" id="search-wrapper">
                     <SearchInput placeholder="搜索文章标题或内容..." @search="onSearch" @clear="clearSearch" @focus="onSearch" />
@@ -46,7 +46,7 @@
 <script>
 import GooeyNav from '../../components/GooeyNav/GooeyNav.vue'
 import SearchInput from '../../components/SearchInput/SearchInput.vue'
-
+import { NAV_ITEMS } from '../../config/site.js'
 export default {
     name: 'Intro',
     components: {
@@ -61,14 +61,7 @@ export default {
                 import: 'default',
                 eager: true
             }),
-
-            navItems: [
-                { label: '首页', href: '/' },
-                { label: '博客', href: '/blog' },
-                { label: '归档', href: '/archive' },
-                { label: '关于', href: '/about' }
-            ],
-
+            navItems: NAV_ITEMS,
             // 搜索相关的状态
             searchResults: [],
             searchResultVisible: false,
@@ -143,22 +136,62 @@ export default {
 </script>
 
 <style scoped>
-/*  🚀 终极赛博网格背景  */
+/* 🚀 终极赛博网格 + 动态极光噪点背景  */
 .page-wrapper {
     position: relative;
     width: 100%;
-    height: 100vh;
-    background-color: #0a0c10;
-    /* 核心魔法：径向渐变模拟光源，线性渐变模拟网格 */
-    background-image:
-        radial-gradient(circle at 50% 30%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 100% 100%, 40px 40px, 40px 40px;
-    background-position: center center;
-    overflow: hidden;
-    color: white;
+    min-height: 100vh;
+    /* 确保最小高度占满 */
+    background-color: #050608;
+    /* 🚀 底色调得更深，极光才够亮 */
+    overflow: hidden !important;
+    /* 🚀 强制锁死外层滚动条，根治右侧闪现 */
     color: #ffffff !important;
+
+    /* 🚀 第一层：动态极光气团 */
+    background-image:
+        radial-gradient(at 0% 0%, rgba(0, 255, 255, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(128, 0, 255, 0.1) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(0, 128, 255, 0.15) 0px, transparent 50%);
+    /* 🚀 让气团位置缓慢平移 */
+    animation: aurora-drift 20s infinite alternate ease-in-out;
+}
+
+/* 🚀 第二层：赛博网格 */
+.page-wrapper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center center;
+    mask-image: radial-gradient(ellipse at center, black, transparent 80%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 🚀 第三层：高阶胶片噪点（增加物理质感） */
+.page-wrapper::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.04; /* 稍微调高一点点，因为内联的噪点比较细腻 */
+    /* 🚀 核心替换：直接把 SVG 代码转成 data URI 写死在 CSS 里，彻底告别 403！ */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 2;
+}
+
+@keyframes aurora-drift {
+    0% {
+        background-position: 0% 0%, 100% 100%, 50% 50%;
+    }
+
+    100% {
+        background-position: 20% 10%, 80% 90%, 40% 60%;
+    }
 }
 
 .content-layer {
@@ -181,20 +214,18 @@ export default {
     font-size: 25px;
 }
 
-
 .main-title {
-    font-size: clamp(60px, 10vw, 120px);
+    font-size: clamp(60px, 10vw, 70px);
     font-weight: 900;
     letter-spacing: 4px;
-    text-transform: uppercase;
     color: #ffffff;
-    /* 🚀 核心新增：如果渐变没出来，先显示白字 */
     background: linear-gradient(135deg, #fff 0%, #00FFFF 100%);
     -webkit-background-clip: text;
+    text-transform: uppercase;
     background-clip: text;
-    /* 增加标准属性 */
     -webkit-text-fill-color: transparent;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(0) scale(1);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     margin-top: 0;
     display: block;
     z-index: 2;
@@ -206,7 +237,6 @@ export default {
 }
 
 .is-searching .main-title {
-    margin-top: -35vh;
     transform: scale(0.7);
     margin-bottom: 20px;
 }
@@ -218,7 +248,12 @@ export default {
     align-items: center;
     justify-content: center;
     padding-bottom: 10vh;
-    transition: all 0.5s ease;
+    transform: translateY(0);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hero-section.is-searching {
+    transform: translateY(-20vh);
 }
 
 .is-searching .search-result-panel {
@@ -234,7 +269,6 @@ export default {
 .search-wrap {
     width: 100%;
     max-width: 800px;
-    /* 拉长到 800px */
     margin-bottom: 60px;
     position: relative;
 }
@@ -295,7 +329,6 @@ export default {
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
     display: flex;
     flex-direction: column;
-    /* 🚀 增加高度变化的过渡动画 */
     transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
         transform 0.5s ease,
         opacity 0.3s ease;
@@ -303,12 +336,9 @@ export default {
 
 .search-result-panel.is-empty {
     height: 140px;
-    /* 足够显示 Header 和 "暂无匹配内容" 的高度 */
     border-color: rgba(255, 255, 255, 0.1);
-    /* 没内容时边框调暗，不抢戏 */
 }
 
-/* 优化：没内容时隐藏滚动条区域的内边距 */
 .search-result-panel.is-empty .result-scroll-area {
     overflow: hidden;
     display: flex;
@@ -321,7 +351,6 @@ export default {
     color: rgba(255, 255, 255, 0.3);
     font-size: 15px;
     letter-spacing: 1px;
-    /* 可以在这里加个简单的呼吸动画 */
     animation: breathe 2s infinite ease-in-out;
 }
 
@@ -338,17 +367,13 @@ export default {
 }
 
 .result-scroll-area {
-    /* 🚀 这是最核心的修改：强制占用除了 Header 以外的所有高度 */
     flex: 1;
     overflow-y: scroll !important;
-    /* 强制显示滚动轨道，哪怕内容不多 */
     padding: 5px 15px;
     margin-top: 5px;
-    /* 阻止滚动事件冒泡到父页面，防止背景跟着晃 */
     overscroll-behavior: contain;
 }
 
-/* 🚀 让滚动条“发光”，不仅好看，还能提醒用户这里可以滚 */
 .result-scroll-area::-webkit-scrollbar {
     width: 8px;
 }
@@ -378,7 +403,6 @@ export default {
     background: rgba(0, 255, 255, 0.1);
     border-color: #00FFFF;
     transform: scale(1.02);
-    /* 悬浮稍微放大，更有点击感 */
 }
 
 .result-item h4 {
@@ -402,13 +426,6 @@ export default {
     border-radius: 4px;
 }
 
-.no-result {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.3);
-    padding: 40px 0;
-}
-
-/* 渐变动画 */
 .fade-enter-active,
 .fade-leave-active {
     transition: opacity 0.3s;
