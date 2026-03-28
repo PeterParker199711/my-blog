@@ -25,10 +25,58 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+
+const route = useRoute();
+
+const syncActiveIndexWithRoute = () => {
+  const currentPath = route.path;
+  const index = props.items.findIndex(item => {
+    if (!item.href) return false;
+    if (item.href === '/') return currentPath === '/';
+    return currentPath.startsWith(item.href);
+  });
+
+  if (index !== -1 && activeIndex.value !== index) {
+    activeIndex.value = index;
+    updateEffectPosition(index);
+  }
+};
+
+watch(() => route.path, () => {
+  nextTick(() => {
+    syncActiveIndexWithRoute();
+  });
+});
+
+onMounted(() => {
+  syncActiveIndexWithRoute();
+  //   initActiveState();
+
+  //   // 2. 使用 nextTick 确保布局已经稳定
+  setTimeout(() => {
+    updateEffectPosition(activeIndex.value);
+    if (filterRef.value) {
+      filterRef.value.classList.add('active');
+      filterRef.value.style.opacity = '1';
+    }
+    if (textRef.value) {
+      textRef.value.classList.add('active');
+      textRef.value.style.opacity = '1';
+    }
+  }, 100);
+
+  //   // 3. 监听窗口缩放，防止胶囊跑偏
+  resizeObserver = new ResizeObserver(() => {
+    updateEffectPosition(activeIndex.value);
+  });
+  if (containerRef.value) {
+    resizeObserver.observe(containerRef.value);
+  }
+});
 
 interface GooeyNavItem {
   label: string;
@@ -189,38 +237,34 @@ const initActiveState = () => {
   }
 };
 
-watch(activeIndex, (newIndex) => {
-  updateEffectPosition(newIndex);
-  textRef.value?.classList.add('active');
-});
 
-onMounted(() => {
-  // 1. 初始化匹配当前路径
-  initActiveState();
+// onMounted(() => {
+//   // 1. 初始化匹配当前路径
+//   initActiveState();
 
-  // 2. 使用 nextTick 确保布局已经稳定
-  setTimeout(() => {
-    updateEffectPosition(activeIndex.value);
+//   // 2. 使用 nextTick 确保布局已经稳定
+//   setTimeout(() => {
+//     updateEffectPosition(activeIndex.value);
 
-    // 强制给滤镜层和文字层加上 active 类
-    if (filterRef.value) {
-      filterRef.value.classList.add('active');
-      filterRef.value.style.opacity = '1'; // 确保可见
-    }
-    if (textRef.value) {
-      textRef.value.classList.add('active');
-      textRef.value.style.opacity = '1';
-    }
-  }, 100); // 稍微给浏览器一点喘息时间，100ms 是视觉黄金分割点
+//     // 强制给滤镜层和文字层加上 active 类
+//     if (filterRef.value) {
+//       filterRef.value.classList.add('active');
+//       filterRef.value.style.opacity = '1'; // 确保可见
+//     }
+//     if (textRef.value) {
+//       textRef.value.classList.add('active');
+//       textRef.value.style.opacity = '1';
+//     }
+//   }, 100); // 稍微给浏览器一点喘息时间，100ms 是视觉黄金分割点
 
-  // 3. 监听窗口缩放，防止胶囊跑偏
-  resizeObserver = new ResizeObserver(() => {
-    updateEffectPosition(activeIndex.value);
-  });
-  if (containerRef.value) {
-    resizeObserver.observe(containerRef.value);
-  }
-});
+//   // 3. 监听窗口缩放，防止胶囊跑偏
+//   resizeObserver = new ResizeObserver(() => {
+//     updateEffectPosition(activeIndex.value);
+//   });
+//   if (containerRef.value) {
+//     resizeObserver.observe(containerRef.value);
+//   }
+// });
 
 onUnmounted(() => {
   if (resizeObserver) {

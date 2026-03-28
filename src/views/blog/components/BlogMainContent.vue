@@ -22,7 +22,7 @@
                         <a-empty v-else description="空空如也，点左侧文章试试" />
                     </div>
 
-                    <Comment v-if="content" :title="title" />
+                    <!-- <Comment v-if="content" :title="title" /> -->
                 </div>
             </transition>
         </a-card>
