@@ -1,36 +1,28 @@
 <template>
-    <div class="page-wrapper">
-        <main class="content-layer">
-            <header class="header">
-                <div class="nav-container">
-                    <GooeyNav :items="navItems" />
-                </div>
-            </header>
+    <BaseLayout>
+        <section class="archive-main">
+            <h1 class="archive-title">TIMELINE <span>归档</span></h1>
 
-            <section class="archive-main">
-                <h1 class="archive-title">TIMELINE <span>归档</span></h1>
-
-                <div v-for="year in sortedYears" :key="year" class="year-group">
-                    <div class="year-label">{{ year }}</div>
-                    <div class="post-list">
-                        <div v-for="post in archiveData[year]" :key="post.path" class="archive-item"
-                            @click="goToPost(post.fileName)">
-                            <span class="post-date">{{ post.date.substring(5) }}</span>
-                            <span class="post-title">{{ post.title }}</span>
-                            <a-tag size="small" class="post-tag">{{ post.tag }}</a-tag>
-                        </div>
+            <div v-for="year in sortedYears" :key="year" class="year-group">
+                <div class="year-label">{{ year }}</div>
+                <div class="post-list">
+                    <div v-for="post in archiveData[year]" :key="post.path" class="archive-item"
+                        @click="goToPost(post.fileName)">
+                        <span class="post-date">{{ post.date.substring(5) }}</span>
+                        <span class="post-title">{{ post.title }}</span>
+                        <a-tag size="small" class="post-tag">{{ post.tag }}</a-tag>
                     </div>
                 </div>
-            </section>
-        </main>
-    </div>
+            </div>
+        </section>
+    </BaseLayout>
 </template>
 
 <script>
-import GooeyNav from '../../components/GooeyNav/GooeyNav.vue'
+import BaseLayout from '../../components/BaseLayout/BaseLayout.vue';
 import { NAV_ITEMS } from '../../config/site.js'
 export default {
-    components: { GooeyNav },
+    components: { BaseLayout },
     data() {
         return {
             postModules: import.meta.glob('../../content/posts/*.md', {
@@ -78,20 +70,10 @@ export default {
 </script>
 
 <style scoped>
-/* 保持背景一致 */
-/* 🚀 全站通用的终极极光背景（复制这段，替换掉 Archive 和 About 里的旧背景） */
-.page-wrapper {
-    position: relative;
-    width: 100%;
-    min-height: 100vh;
-    background-color: #050608;
-    overflow-x: hidden;
-    color: #ffffff !important;
-    background-image:
-        radial-gradient(at 0% 0%, rgba(0, 255, 255, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(128, 0, 255, 0.1) 0px, transparent 50%),
-        radial-gradient(at 50% 100%, rgba(0, 128, 255, 0.15) 0px, transparent 50%);
-    animation: aurora-drift 20s infinite alternate ease-in-out;
+.archive-main {
+    max-width: 800px;
+    margin: 60px auto;
+    padding: 0 20px;
 }
 
 .page-wrapper::before {
@@ -107,6 +89,7 @@ export default {
     pointer-events: none;
     z-index: 1;
 }
+
 .page-wrapper::after {
     content: "";
     position: absolute;
@@ -119,27 +102,12 @@ export default {
     z-index: 2;
 }
 
-@keyframes aurora-drift {
-    0% {
-        background-position: 0% 0%, 100% 100%, 50% 50%;
-    }
-
-    100% {
-        background-position: 20% 10%, 80% 90%, 40% 60%;
-    }
-}
-
 .content-layer {
     position: relative;
     z-index: 10;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-}
-.archive-main {
-    max-width: 800px;
-    margin: 60px auto;
-    padding: 0 20px;
 }
 
 .archive-title {

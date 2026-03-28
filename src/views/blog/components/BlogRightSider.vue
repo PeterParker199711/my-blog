@@ -1,6 +1,6 @@
 <template>
     <div class="right-sider-container">
-        <a-card :bordered="false" class="glass-card author-card">
+        <a-card :bordered="false" class="blog-glass-card author-card">
             <div class="avatar-wrapper">
                 <a-avatar :size="80" class="avatar-glow">
                     <img alt="avatar" src="../../../assets/spider.png" class="avatar-img" />
@@ -8,24 +8,24 @@
             </div>
             <div class="author-info">
                 <h3 class="name">Peter</h3>
-                <p class="bio">一位苦逼开发</p>
+                <p class="bio">苦逼一位</p>
             </div>
             <a-divider />
             <div class="social-links">
                 <a-space size="large">
                     <a-link href="#">
-                        <icon-wechat :size="22" class="social-icon" @click="ss" />
+                        <icon-wechat :size="22" class="social-icon" @click="goto('wechat')" />
                     </a-link>
                     <a-link href="#">
-                        <icon-twitter :size="22" class="social-icon" />
+                        <icon-twitter :size="22" class="social-icon" @click="goto('twitter')" />
                     </a-link>
                 </a-space>
             </div>
         </a-card>
 
-        <a-card :bordered="false" class="glass-card toc-card">
+        <a-card :bordered="false" class="blog-glass-card toc-card">
             <template #title>
-                <div class="toc-header">
+                <div class="blog-card-title">
                     <icon-nav :size="16" />
                     <span style="margin-left: 8px">当前目录</span>
                 </div>
@@ -40,12 +40,11 @@
 </template>
 
 <script>
-// 导入图标
-import { IconGithub, IconWechat, IconTwitter, IconNav } from '@arco-design/web-vue/es/icon';
+import { IconWechat, IconTwitter, IconNav } from '@arco-design/web-vue/es/icon';
 
 export default {
     name: 'BlogRightSider',
-    components: { IconGithub, IconWechat, IconTwitter, IconNav },
+    components: { IconWechat, IconTwitter, IconNav },
     props: {
         tocList: {
             type: Array,
@@ -53,24 +52,18 @@ export default {
         }
     },
     methods: {
-        ss() {
-            console.log('ss杀杀杀s');
-
+        goto(platform) {
+            const urls = {
+                wechat: 'https://wechat.com/',
+                twitter: 'https://twitter.com/'
+            };
+            window.open(urls[platform], '_blank');
         }
     }
 }
 </script>
 
 <style scoped>
-.glass-card {
-    background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    margin-bottom: 24px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
 .avatar-wrapper {
     display: flex;
     justify-content: center;
@@ -87,6 +80,7 @@ export default {
 .avatar-img {
     width: 100%;
     height: 100%;
+    object-fit: fill;
 }
 
 .author-info {
@@ -123,25 +117,52 @@ export default {
     filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.5));
 }
 
-.toc-header {
-    color: #00FFFF;
-    font-size: 14px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-}
-
 .custom-anchor {
     background: transparent;
+    padding-left: 5px;
 }
 
-:deep(.arco-anchor-link-title) {
-    color: rgba(255, 255, 255, 0.5) !important;
-    transition: all 0.3s;
+/* 1. 提升基础文字亮度与手感 (加上 .toc-card 前缀提升权重) */
+.toc-card :deep(.arco-anchor-link-title) {
+    color: rgba(255, 255, 255, 0.75) !important;
+    font-size: 13.5px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: inline-block;
 }
 
-:deep(.arco-anchor-link-active .arco-anchor-link-title) {
+/* 2. 鼠标悬浮特效：文字高亮并微微向右浮动 */
+.toc-card :deep(.arco-anchor-link:hover > .arco-anchor-link-title) {
+    color: #fff !important;
+    transform: translateX(4px);
+}
+
+/* 3. 激活状态：极光青色 + 荧光爆燃 + 保持右移 */
+.toc-card :deep(.arco-anchor-link-active > .arco-anchor-link-title) {
     color: #00FFFF !important;
-    text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.6) !important;
+    transform: translateX(4px);
+}
+
+/* 4. 改造 Arco 默认的左侧轨道（暗色轨道） */
+.toc-card :deep(.arco-anchor-line) {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    width: 2px !important;
+}
+
+/* 5. 改造 Arco 默认的滑动指示器（霓虹光剑） */
+.toc-card :deep(.arco-anchor-line-slider) {
+    background-color: #00FFFF !important;
+    width: 2px !important;
+    border-radius: 2px;
+    box-shadow: 0 0 8px #00FFFF, 0 0 15px #00FFFF !important;
+    transition: top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.empty-toc {
+    color: rgba(255, 255, 255, 0.3);
+    text-align: center;
+    padding: 20px 0;
+    font-size: 13px;
 }
 </style>

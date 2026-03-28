@@ -7,6 +7,59 @@ import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 
+// 🚀 核心修复：把自定义渲染器抽离到组件外部，只初始化一次！
+const renderer = new marked.Renderer();
+
+// 1. 拦截标题，强制生成与右侧目录一致的安全 ID
+renderer.heading = (...args) => {
+    let text = '';
+    let level = 2;
+    // 兼容 marked 新旧版本传参
+    if (typeof args[0] === 'object') {
+        text = args[0].text;
+        level = args[0].depth;
+    } else {
+        text = args[0];
+        level = args[1];
+    }
+
+    const pureText = text.replace(/<[^>]+>/g, '').trim();
+    // 这里的正则必须和 Blog.vue 里生成目录的正则一模一样！
+    const safeId = 'heading-' + pureText.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
+
+    return `<h${level} id="${safeId}">${text}</h${level}>`;
+};
+
+// 2. 拦截代码块，注入 Mac 风格工具栏和复制按钮
+renderer.code = (...args) => {
+    let code = '';
+    let language = '';
+
+    if (typeof args[0] === 'object') {
+        code = args[0].text;
+        language = args[0].lang || 'text';
+    } else {
+        code = args[0];
+        language = args[1] || 'text';
+    }
+
+    const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
+    const highlightedCode = hljs.highlight(code, { language: validLanguage }).value;
+
+    return `
+        <div class="code-block-wrapper">
+            <div class="code-header">
+                <span class="code-lang">${validLanguage}</span>
+                <button class="copy-btn">复制</button>
+            </div>
+            <pre><code class="hljs ${validLanguage}">${highlightedCode}</code></pre>
+        </div>
+    `;
+};
+
+// 🚀 核心修复：使用 marked.use() 让自定义渲染器在全局生效
+marked.use({ renderer });
+
 export default {
     name: 'MarkdownViewer',
     props: {
@@ -18,88 +71,27 @@ export default {
     computed: {
         parsedHtml() {
             if (!this.content) return '';
-
-            const renderer = new marked.Renderer();
-
-            // 1. 拦截标题（保持原有逻辑不变）
-            renderer.heading = (...args) => {
-                let text = '';
-                let level = 2;
-                if (typeof args[0] === 'object') {
-                    text = args[0].text;
-                    level = args[0].depth;
-                } else {
-                    text = args[0];
-                    level = args[1];
-                }
-
-                const pureText = text.replace(/<[^>]+>/g, '').trim();
-                const safeId = 'heading-' + pureText.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
-
-                return `<h${level} id="${safeId}">${text}</h${level}>`;
-            };
-
-            // 2. 🚀 拦截代码块（注入复制按钮和语言标签）
-            renderer.code = (...args) => {
-                let code = '';
-                let language = '';
-
-                if (typeof args[0] === 'object') {
-                    code = args[0].text;
-                    language = args[0].lang || 'text';
-                } else {
-                    code = args[0];
-                    language = args[1] || 'text';
-                }
-
-                const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
-                const highlightedCode = hljs.highlight(code, { language: validLanguage }).value;
-
-                // 🚀 核心修改：用一个 div.code-block-wrapper 把代码块包起来，并在顶部加上 Mac 风格的工具栏
-                return `
-                    <div class="code-block-wrapper">
-                        <div class="code-header">
-                            <span class="code-lang">${validLanguage}</span>
-                            <button class="copy-btn" data-code="">复制</button>
-                        </div>
-                        <pre><code class="hljs ${validLanguage}">${highlightedCode}</code></pre>
-                    </div>
-                `;
-            };
-
-            return marked.parse(this.content, { renderer });
+            // 此时 marked 已经携带了我们的自定义规则，直接解析即可
+            return marked.parse(this.content);
         }
     },
     methods: {
-        // 🚀 新增：利用事件委托，处理所有动态生成的 HTML 里的点击事件
         async handleDocClick(e) {
-            // 如果点击的元素带有 'copy-btn' 类名
             if (e.target.classList.contains('copy-btn')) {
                 const btn = e.target;
-
-                // 向上找到包裹这个代码块的父容器
                 const wrapper = btn.closest('.code-block-wrapper');
-                // 从父容器里找到里面真正的代码内容
                 const codeBlock = wrapper.querySelector('code');
 
                 if (codeBlock) {
-                    // 获取纯文本代码（innerText 会自动忽略高亮的 span 标签）
                     const codeText = codeBlock.innerText;
-
                     try {
-                        // 调用现代浏览器的剪贴板 API 写入文字
                         await navigator.clipboard.writeText(codeText);
-
-                        // 给按钮一个成功反馈
                         btn.innerText = '已复制!';
                         btn.classList.add('copied');
-
-                        // 2秒后恢复原样
                         setTimeout(() => {
                             btn.innerText = '复制';
                             btn.classList.remove('copied');
                         }, 2000);
-
                     } catch (err) {
                         console.error('复制失败:', err);
                         btn.innerText = '失败';
@@ -112,6 +104,7 @@ export default {
 </script>
 
 <style scoped>
+/* 这里保留你原本所有的精美 CSS 样式，一行都不用改！ */
 .markdown-body {
     color: rgba(255, 255, 255, 0.85);
     font-size: 16px;
@@ -137,11 +130,10 @@ export default {
     margin-bottom: 16px;
 }
 
-/* 🚀 代码块外层容器 */
+/* 代码块相关样式 */
 :deep(.code-block-wrapper) {
     position: relative;
     background: #1e1e24;
-    /* 深沉的高级灰底色 */
     border-radius: 8px;
     margin: 20px 0;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -149,7 +141,6 @@ export default {
     overflow: hidden;
 }
 
-/* 🚀 顶部工具栏 (显示语言 + 复制按钮) */
 :deep(.code-header) {
     display: flex;
     justify-content: space-between;
@@ -166,7 +157,6 @@ export default {
     font-weight: 600;
 }
 
-/* 🚀 复制按钮样式 */
 :deep(.copy-btn) {
     background: transparent;
     color: rgba(255, 255, 255, 0.5);
@@ -183,7 +173,6 @@ export default {
     color: #fff;
 }
 
-/* 复制成功后的状态 */
 :deep(.copy-btn.copied) {
     background: #00FFFF;
     color: #000;
@@ -191,13 +180,11 @@ export default {
     font-weight: bold;
 }
 
-/* 修改原有 pre 的样式，去掉多余的边框和圆角 */
 :deep(pre) {
     margin: 0;
     padding: 16px;
     overflow-x: auto;
     background: transparent;
-    /* 背景色交由外层 wrapper 控制 */
 }
 
 :deep(pre code) {
