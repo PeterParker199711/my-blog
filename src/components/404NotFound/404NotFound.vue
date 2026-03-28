@@ -28,19 +28,25 @@ const goHome = () => {
 </script>
 
 <style scoped>
+/* 404NotFound.vue 的 style 部分 */
 .not-found-container {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #050505;
-    /* 深色背景 */
-    color: white;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    /* ... 之前的样式 */
+    background-image: url("../../assets/spiderman4.png");
+    /* 引入大背景 */
+    background-size: cover;
+    background-position: center;
+    position: relative;
 }
 
+/* 加上一个深色半透明遮罩，让 404 文字更突出 */
+.not-found-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    /* 比登录页更暗一点，突出“迷失”感 */
+    z-index: 1;
+}
 .content {
     text-align: center;
     display: flex;

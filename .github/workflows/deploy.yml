@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main] # 当代码推送到 main 分支时，自动触发打包
+    branches: [yangxb] # 当代码推送到 main 分支时，自动触发打包
 
 # 设置权限，允许脚本把打包好的网页发布出去
 permissions:
@@ -23,12 +23,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: "npm"
       - name: Install dependencies
         run: npm install # 安装依赖
       - name: Build
-        run: npm run build # 执行 Vite 打包命令
+        run: |
+          npm run build
+          cp dist/index.html dist/404.html
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact

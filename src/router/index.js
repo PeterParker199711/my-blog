@@ -27,6 +27,12 @@ const routes = [
             title: '系统登录 - Peter Space'
         }
     },
+    {
+        path: '/:pathMatch(.*)*',
+        name: 'NotFound',
+        component: () => import('../components/404NotFound/404NotFound.vue'), // 确保路径指向你存放该文件的位置
+        meta: { title: '404 - 信号丢失' }
+    }
 ]
 
 const router = createRouter({
