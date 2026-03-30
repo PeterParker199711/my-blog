@@ -22,7 +22,6 @@ export default {
 </script>
 
 <style scoped>
-/* 🚀 把你原本分散在三个文件里的长串背景代码，统一放在这里！ */
 .page-wrapper {
     position: relative;
     width: 100%;

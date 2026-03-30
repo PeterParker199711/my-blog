@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import ArcoVue from '@arco-design/web-vue';
@@ -8,4 +9,5 @@ import './publicstyle/BlogGlobal.css'; // 引入全局样式
 const app = createApp(App);
 app.use(router);
 app.use(ArcoVue);
+app.use(createPinia());
 app.mount('#app');

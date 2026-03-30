@@ -8,7 +8,7 @@
             </div>
             <div class="author-info">
                 <h3 class="name">Peter</h3>
-                <p class="bio">苦逼一位</p>
+               <p class="bio">With great power comes great responsibility</p>
             </div>
             <a-divider />
             <div class="social-links">
@@ -95,9 +95,25 @@ export default {
 }
 
 .bio {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 13px;
-    margin: 0;
+    /* 🚀 字体样式 */
+    font-size: 14px;
+    font-style: italic;
+    /* 斜体增加人文感 */
+    color: rgba(255, 255, 255, 0.7);
+    /* 基础颜色用半透明白 */
+    line-height: 1.6;
+    margin-top: 8px;
+
+    /* 🚀 科技青高亮 */
+    background: linear-gradient(90deg, #00FFFF, #0080FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    /* 🚀 微弱的光晕效果 */
+    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.3));
+
+    /* 保持居中（如果是在右侧头像下方） */
+    text-align: center;
 }
 
 .social-links {

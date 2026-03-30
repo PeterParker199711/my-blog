@@ -68,7 +68,6 @@ export default {
             }, 150);
         },
 
-        // 🚀 新增的清空方法
         clearContent() {
             this.query = '';
             // 强制把光标按回输入框
@@ -137,7 +136,7 @@ input::placeholder {
 }
 
 
-/* 🚀 补上缺失的容器样式，让按钮变得好点 */
+/*  补上缺失的容器样式，让按钮变得好点 */
 .search-suffix {
     display: flex;
     align-items: center;

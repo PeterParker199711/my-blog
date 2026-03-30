@@ -9,14 +9,13 @@
 
                     <div class="glitch-wrapper">
                         <h1 class="name" data-text="PETER PARKER">/peter\ </h1>
-                        <p class="tagline">努力奔跑的开发</p>
+                        <p class="tagline">With great power comes great responsibility</p>
                     </div>
                 </div>
 
                 <a-divider />
 
                 <div class="bio-text">
-                    <p>👋 白天在 0 和 1 的世界里修 BUG，晚上在赛博空间的网格里造梦。</p>
                 </div>
 
                 <div class="social-icons">
@@ -64,7 +63,7 @@ export default {
 </script>
 
 <style scoped>
-/* 🚀 那些长达几十行的极光背景、噪点 SVG 已经被彻底删除了，现在由 BaseLayout 接管！ */
+/*  那些长达几十行的极光背景、噪点 SVG 已经被彻底删除了，现在由 BaseLayout 接管！ */
 
 .about-container {
     max-width: 1200px;

@@ -1,32 +1,37 @@
 <template>
     <BaseLayout>
         <a-layout class="transparent-layout">
-            <a-layout-content class="blog-content-body">
+            <a-spin :loading="loading" tip="正在同步时空数据..." :size="32" style="width: 100%">
+                <a-layout-content class="blog-content-body">
 
-                <div class="mobile-action-bar" v-if="isMobile">
-                    <a-button type="primary" shape="round" class="glass-btn" @click="leftDrawerVisible = true">
-                        <template #icon><icon-menu /></template>
-                        文章列表
-                    </a-button>
-                    <a-button type="primary" shape="round" class="glass-btn" @click="rightDrawerVisible = true">
-                        章节目录
-                        <template #icon><icon-nav /></template>
-                    </a-button>
-                </div>
-
-                <div class="blog-grid-system" :class="{ 'is-mobile': isMobile }">
-                    <div class="desktop-sider" v-if="!isMobile">
-                        <BlogLeftSider :articles="filteredArticles" @select="onArticleChange"
-                            @category-change="handleCategoryChange" />
+                    <div class="mobile-action-bar" v-if="isMobile">
+                        <a-button type="primary" shape="round" class="glass-btn" @click="leftDrawerVisible = true">
+                            <template #icon><icon-menu /></template>
+                            文章列表
+                        </a-button>
+                        <a-button type="primary" shape="round" class="glass-btn" @click="rightDrawerVisible = true">
+                            章节目录
+                            <template #icon><icon-nav /></template>
+                        </a-button>
                     </div>
 
-                    <BlogMainContent :title="activeTitle" :content="activeContent" :meta="activeMeta" />
+                    <div class="blog-grid-system" :class="{ 'is-mobile': isMobile }">
+                        <div class="desktop-sider" v-if="!isMobile">
+                            <!-- <BlogLeftSider :articles="filteredArticles" :active-id="activeArticleId"
+                                @select="onArticleChange" @category-change="handleCategoryChange" /> -->
+                            <BlogLeftSider :articles="filteredArticles" :categories="categories"
+                                :active-id="activeArticleId" @select="onArticleChange"
+                                @category-change="handleCategoryChange" />
+                        </div>
 
-                    <div class="desktop-sider" v-if="!isMobile">
-                        <BlogRightSider :tocList="currentToc" />
+                        <BlogMainContent :title="activeTitle" :content="activeContent" :meta="activeMeta" />
+
+                        <div class="desktop-sider" v-if="!isMobile">
+                            <BlogRightSider :tocList="currentToc" />
+                        </div>
                     </div>
-                </div>
-            </a-layout-content>
+                </a-layout-content>
+            </a-spin>
         </a-layout>
 
         <a-drawer class="blog-drawer" :visible="leftDrawerVisible" placement="left" :width="300" :footer="false"
@@ -45,14 +50,13 @@
 </template>
 
 <script>
-// 🚀 引入基座布局
 import BaseLayout from '../../components/BaseLayout/BaseLayout.vue';
 import { IconMenu, IconNav } from '@arco-design/web-vue/es/icon';
-// 注意这里不再需要引入 BlogHeader 了
 import BlogLeftSider from './components/BlogLeftSider.vue';
 import BlogMainContent from './components/BlogMainContent.vue';
 import BlogRightSider from './components/BlogRightSider.vue';
-
+import { getArticleListAPI } from '../../api/article';
+import { getArticles, getCategories } from '../../api/blog';
 export default {
     name: 'Blog',
     components: {
@@ -65,16 +69,14 @@ export default {
     },
     data() {
         return {
-            postModules: import.meta.glob('../../content/posts/*.md', {
-                query: '?raw',
-                import: 'default',
-                eager: true
-            }),
+            loading: false,
+            articles: [],
+            activeArticleId: null,
             activeTitle: '',
             activeContent: '',
-            currentToc: [],
             activeMeta: {},
-            articles: [],
+            currentToc: [],
+            categories: [],      // 动态分类列表
             currentCategory: '全部',
             isMobile: false,
             leftDrawerVisible: false,
@@ -83,95 +85,106 @@ export default {
     },
     computed: {
         filteredArticles() {
-            if (this.currentCategory === '全部') {
-                return this.articles;
-            }
-            return this.articles.filter(article => article.tag === this.currentCategory);
+            if (this.currentCategory === '全部') return this.articles;
+            return this.articles.filter(a => a.tag === this.currentCategory);
         }
     },
-    mounted() {
-        this.initData();
+    async mounted() {
         this.checkMobile();
-        this.resizeHandler = () => {
-            if (this.resizeTimer) clearTimeout(this.resizeTimer);
-            this.resizeTimer = setTimeout(() => {
-                this.checkMobile();
-            }, 100);
-        };
-        window.addEventListener('resize', this.resizeHandler);
+        window.addEventListener('resize', this.handleResize);
+        this.initData();
     },
     beforeUnmount() {
-        window.removeEventListener('resize', this.resizeHandler);
+        window.removeEventListener('resize', this.handleResize);
     },
     methods: {
-        checkMobile() {
-            this.isMobile = window.innerWidth <= 1200;
-        },
-        onMobileArticleChange(article) {
-            this.onArticleChange(article);
-            this.leftDrawerVisible = false;
-        },
-        initData() {
-            const list = Object.keys(this.postModules).map((path, index) => {
-                const rawContent = this.postModules[path] || '';
-                const fmMatch = rawContent.match(/---\r?\n([\s\S]*?)\r?\n---/);
-                let title = path.split('/').pop().replace('.md', '');
-                let date = '未知日期';
-                let tag = '未分类';
-                if (fmMatch) {
-                    const fmString = fmMatch[1];
-                    const titleMatch = fmString.match(/title:\s*([^\r\n]*)/);
-                    const dateMatch = fmString.match(/date:\s*([^\r\n]*)/);
-                    const tagMatch = fmString.match(/tag:\s*([^\r\n]*)/);
+        async initData() {
+            this.loading = true;
+            try {
+                const [artRes, catRes] = await Promise.all([
+                    getArticles(),
+                    getCategories()
+                ]);
 
-                    if (titleMatch) title = titleMatch[1].trim();
-                    if (dateMatch) date = dateMatch[1].trim();
-                    if (tagMatch) tag = tagMatch[1].trim();
+                // 1. 设置分类列表
+                this.categories = [{ id: 0, name: '全部' }, ...catRes];
+
+                // 2. 映射文章数据
+                this.articles = artRes.map(item => ({
+                    id: item.id,
+                    title: item.title,
+                    rawContent: item.content,
+                    date: item.publishTime ? item.publishTime.split('T')[0] : '未知日期',
+                    tag: item.categoryName || '未分类'
+                }));
+
+                // 3. 默认选中
+                if (this.articles.length > 0) {
+                    this.onArticleChange(this.articles[0]);
                 }
-                return { id: index, title, path, date, tag, rawContent };
-            });
-
-            this.articles = list;
-            if (list.length > 0) this.onArticleChange(list[0]);
+            } catch (error) {
+                console.error("初始化数据失败", error);
+            } finally {
+                this.loading = false;
+            }
+            if (this.$route.query.id) {
+                const target = this.articles.find(a => a.title.includes(this.$route.query.id));
+                if (target) this.onArticleChange(target);
+            }
+        },
+        // 分类切换逻辑
+        handleCategoryChange(categoryName) {
+            this.currentCategory = categoryName;
+            // 切换分类后，自动选中该分类下的第一篇文章
+            const firstOfCategory = this.filteredArticles[0];
+            if (firstOfCategory) {
+                this.onArticleChange(firstOfCategory);
+            }
         },
         onArticleChange(article) {
+            this.activeArticleId = article.id;
             this.activeTitle = article.title;
             this.activeMeta = {
-                date: article.date || '未知日期',
-                tag: article.tag || '未分类'
+                date: article.date,
+                tag: article.tag
             };
-            const contentBody = article.rawContent.replace(/---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
-            this.activeContent = contentBody;
+            this.activeContent = article.rawContent;
 
+            // 生成目录索引（逻辑保持不变，依然解析 h2/h3）
             const headingRegex = /^(#{2,3})\s+(.*)/gm;
             const toc = [];
             let match;
-            while ((match = headingRegex.exec(contentBody)) !== null) {
+            while ((match = headingRegex.exec(article.rawContent)) !== null) {
                 const rawText = match[2].trim();
                 const safeId = 'heading-' + rawText.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
                 toc.push({ id: safeId, text: rawText });
             }
             this.currentToc = toc;
         },
+
         handleCategoryChange(category) {
             this.currentCategory = category;
-            const newList = this.filteredArticles;
-            if (newList.length > 0) {
-                this.onArticleChange(newList[0]);
-            } else {
-                this.activeTitle = '';
-                this.activeContent = '';
-                this.activeMeta = {};
-                this.currentToc = [];
+            if (this.filteredArticles.length > 0) {
+                this.onArticleChange(this.filteredArticles[0]);
             }
+        },
+
+        // 基础 UI 方法
+        checkMobile() {
+            this.isMobile = window.innerWidth <= 1200;
+        },
+        handleResize() {
+            if (this.resizeTimer) clearTimeout(this.resizeTimer);
+            this.resizeTimer = setTimeout(() => this.checkMobile(), 100);
+        },
+        onMobileArticleChange(article) {
+            this.onArticleChange(article);
+            this.leftDrawerVisible = false;
         }
     }
 }
 </script>
-
 <style scoped>
-/* 🚀 极光背景全部剥离，交给 BaseLayout */
-
 .transparent-layout {
     background: transparent !important;
 }

@@ -1,10 +1,8 @@
 <template>
     <div class="not-found-container">
         <div class="content">
-            <FuzzyText :font-size="140" :font-weight="900"
-            color="#00FFFF" :enable-hover="true" :base-intensity="0.15"
-                :hover-intensity="0.8" :glitch-mode="true"
-                :click-effect="true" :letter-spacing="10">
+            <FuzzyText :font-size="140" :font-weight="900" color="#00FFFF" :enable-hover="true" :base-intensity="0.15"
+                :hover-intensity="0.8" :glitch-mode="true" :click-effect="true" :letter-spacing="10">
                 404
             </FuzzyText>
 
@@ -23,36 +21,51 @@ import FuzzyText from '../FuzzyText/FuzzyText.vue';
 const router = useRouter();
 
 const goHome = () => {
+    // 🚀 这里建议直接跳回 /blog 或者 /，取决于你的登录状态
     router.push('/');
 };
 </script>
 
 <style scoped>
-/* 404NotFound.vue 的 style 部分 */
 .not-found-container {
-    /* ... 之前的样式 */
+    /* 🚀 核心修复：确保容器占满全屏 */
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
     background-image: url("../../assets/spiderman4.png");
-    /* 引入大背景 */
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
     position: relative;
+    overflow: hidden;
 }
 
-/* 加上一个深色半透明遮罩，让 404 文字更突出 */
+/* 深色半透明遮罩 */
 .not-found-container::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.8);
-    /* 比登录页更暗一点，突出“迷失”感 */
+    background: rgba(0, 0, 0, 0.85);
+    /* 稍微深一点，增加深渊感 */
     z-index: 1;
+    /* 遮罩层在底层 */
 }
+
 .content {
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    /* 🚀 核心修复：必须加上 position，z-index 才会生效 */
+    position: relative;
     z-index: 10;
+    /* 确保内容在遮罩层之上 */
+    pointer-events: auto;
+    /* 确保可以被点击 */
 }
 
 .sub-title {
@@ -80,11 +93,14 @@ const goHome = () => {
     letter-spacing: 2px;
     cursor: pointer;
     transition: all 0.3s ease;
+    /* 强行取消父级的 pointer-events 影响（如果有的话） */
+    pointer-events: all;
 }
 
 .back-btn:hover {
     background: rgba(0, 255, 255, 0.1);
     border-color: #00FFFF;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+    transform: translateY(-2px);
 }
 </style>

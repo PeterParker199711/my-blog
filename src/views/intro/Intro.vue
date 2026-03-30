@@ -55,7 +55,7 @@ export default {
     },
     data() {
         return {
-            // 🚀 读取 Markdown 文件用于搜索
+            //  读取 Markdown 文件用于搜索
             postModules: import.meta.glob('../../content/posts/*.md', {
                 query: '?raw',
                 import: 'default',
@@ -74,7 +74,7 @@ export default {
             }
         },
 
-        // 🚀 搜索逻辑
+        //  搜索逻辑
         onSearch(keyword) {
             if (!keyword || keyword.trim() === '') {
                 this.searchResultVisible = false;
@@ -127,7 +127,7 @@ export default {
             this.clearSearch();
             const fileName = path.split('/').pop().replace('.md', '');
             if (this.$router) {
-                // 🚀 跳转到博客页并携带文章 ID
+                //  跳转到博客页并携带文章 ID
                 this.$router.push({ path: '/blog', query: { id: fileName } });
             }
         }
@@ -136,28 +136,28 @@ export default {
 </script>
 
 <style scoped>
-/* 🚀 终极赛博网格 + 动态极光噪点背景  */
+/*  终极赛博网格 + 动态极光噪点背景  */
 .page-wrapper {
     position: relative;
     width: 100%;
     min-height: 100vh;
     /* 确保最小高度占满 */
     background-color: #050608;
-    /* 🚀 底色调得更深，极光才够亮 */
+    /*  底色调得更深，极光才够亮 */
     overflow: hidden !important;
-    /* 🚀 强制锁死外层滚动条，根治右侧闪现 */
+    /*  强制锁死外层滚动条，根治右侧闪现 */
     color: #ffffff !important;
 
-    /* 🚀 第一层：动态极光气团 */
+    /*  第一层：动态极光气团 */
     background-image:
         radial-gradient(at 0% 0%, rgba(0, 255, 255, 0.15) 0px, transparent 50%),
         radial-gradient(at 100% 0%, rgba(128, 0, 255, 0.1) 0px, transparent 50%),
         radial-gradient(at 50% 100%, rgba(0, 128, 255, 0.15) 0px, transparent 50%);
-    /* 🚀 让气团位置缓慢平移 */
+    /*  让气团位置缓慢平移 */
     animation: aurora-drift 20s infinite alternate ease-in-out;
 }
 
-/* 🚀 第二层：赛博网格 */
+/*  第二层：赛博网格 */
 .page-wrapper::before {
     content: "";
     position: absolute;
@@ -172,13 +172,13 @@ export default {
     z-index: 1;
 }
 
-/* 🚀 第三层：高阶胶片噪点（增加物理质感） */
+/*  第三层：高阶胶片噪点（增加物理质感） */
 .page-wrapper::after {
     content: "";
     position: absolute;
     inset: 0;
     opacity: 0.04; /* 稍微调高一点点，因为内联的噪点比较细腻 */
-    /* 🚀 核心替换：直接把 SVG 代码转成 data URI 写死在 CSS 里，彻底告别 403！ */
+    /*  核心替换：直接把 SVG 代码转成 data URI 写死在 CSS 里，彻底告别 403！ */
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     pointer-events: none;
     z-index: 2;

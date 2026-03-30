@@ -14,7 +14,7 @@
                             <div class="reader-meta">
                                 <span>📅 {{ meta.date || '未知日期' }}</span>
                                 <a-divider direction="vertical" />
-                                <span>👤 Peter Parker</span>
+                                <span>👤 Peter</span>
                             </div>
                         </div>
                         <a-divider />
@@ -59,7 +59,6 @@ export default {
         }
     },
     mounted() {
-        // 🚀 因为容器现在一直存在，直接绑定监听即可，不用在动画钩子里绑了
         this.initScrollListener();
     },
     beforeUnmount() {
@@ -106,7 +105,7 @@ export default {
 </script>
 
 <style scoped>
-/* 🚀 CSS 几乎不用大改，保留你原本帅气的极光面板样式即可 */
+/*  CSS 几乎不用大改，保留你原本帅气的极光面板样式即可 */
 /* 只添加一个 wrapper 的基础样式 */
 .article-inner-wrapper {
     width: 100%;
@@ -172,7 +171,7 @@ export default {
     padding: 30px 40px;
     height: 100%;
     scroll-behavior: smooth;
-    /* 🚀 加入平滑滚动 */
+    /*  加入平滑滚动 */
     will-change: transform;
 }
 

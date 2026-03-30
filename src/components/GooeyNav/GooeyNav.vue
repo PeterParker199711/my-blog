@@ -223,7 +223,6 @@ const handleKeyDown = (e: KeyboardEvent, index: number) => {
   }
 };
 
-// 🚀 核心新增：根据当前网址智能匹配激活项
 const initActiveState = () => {
   const currentPath = window.location.pathname;
   const index = props.items.findIndex(item => {

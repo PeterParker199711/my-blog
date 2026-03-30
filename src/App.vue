@@ -1,16 +1,32 @@
 <template>
   <div class="app-container">
-    <router-view v-slot="{ Component, route }">
+    <router-view v-if="routerReady" v-slot="{ Component, route }">
+      <!-- <transition name="page-fade" mode="out-in"> -->
       <component :is="Component" :key="route.path" />
+      <!-- </transition> -->
     </router-view>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+
+const routerReady = ref(false);
+const router = useRouter();
+
+onMounted(async () => {
+  // 等待路由解析完成
+  await router.isReady();
+  // 🚀 这里现在能正确找到变量并赋值了
+  routerReady.value = true;
+});
 </script>
 
 <style>
+/* 引用你的全局样式 */
 @import './publicstyle/BlogGlobal.css';
+
 /* 全局基础重置 */
 body,
 html {
@@ -19,10 +35,10 @@ html {
   width: 100%;
   height: 100%;
   background-color: #000;
+  /* 纯黑底色，防止路由跳转瞬间闪白 */
   color: white;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
-  /* 防止原生滚动条破坏排版 */
 }
 
 .app-container {
@@ -31,33 +47,23 @@ html {
   height: 100vh;
 }
 
-.background-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  /* 防止背景阻挡点击事件 */
-}
-
-.aurora-bg {
-  opacity: 0.6;
-}
-
-/* 🔥 核心：德芙般丝滑的页面转场动画 🔥 */
+/* 🔥 核心：德芙般丝滑的页面转场动画样式 🔥 */
 .page-fade-enter-active,
 .page-fade-leave-active {
-  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 调整为 0.4s 会更清爽一些，0.6s 稍微有点慢 */
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .page-fade-enter-from {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(15px);
   /* 新页面从下方微微浮现 */
 }
 
 .page-fade-leave-to {
   opacity: 0;
-  transform: translateY(-20px);
+  transform: translateY(-15px);
   /* 老页面向上方飘逸消失 */
 }
 </style>

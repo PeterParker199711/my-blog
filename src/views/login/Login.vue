@@ -99,8 +99,8 @@
 
 <script>
 import { IconUser, IconLock } from '@arco-design/web-vue/es/icon';
+import { useUserStore } from '../../store/user';
 import { Message } from '@arco-design/web-vue';
-
 export default {
     name: 'AuthPage',
     components: { IconUser, IconLock },
@@ -108,8 +108,8 @@ export default {
         return {
             isRegister: false,
             loading: false,
-            // 🚀 默认塞入假账号密码，省得每次手动输入
-            loginForm: { username: 'admin', password: 'password' },
+            //  默认塞入假账号密码，省得每次手动输入
+            loginForm: { username: 'admin', password: '123456' },
             registerForm: { username: '', password: '', confirmPassword: '' }
         }
     },
@@ -120,17 +120,22 @@ export default {
             this.registerForm = { username: '', password: '', confirmPassword: '' };
             this.isRegister = !this.isRegister;
         },
-        handleLoginSubmit({ errors }) {
+        // Login.vue 的 handleLoginSubmit 关键部分
+        async handleLoginSubmit({ errors }) {
             if (errors) return;
             this.loading = true;
-            setTimeout(() => {
-                Message.success('登录成功');
-                this.loading = false;
-                // 模拟保存 Token 并跳转
-                localStorage.setItem('blog_token', 'mock_token_123');
+            try {
+                const userStore = useUserStore();
+                await userStore.doLogin(this.loginForm);
+                Message.success('欢迎回来,管理员');
                 const redirectUrl = this.$route.query.redirect || '/blog';
                 this.$router.push(redirectUrl);
-            }, 1500);
+            } catch (error) {
+                // 错误已被 request.js 拦截弹窗，这里只需停止 loading
+                this.loading = false;
+            } finally {
+                this.loading = false;
+            }
         },
         handleRegisterSubmit({ errors }) {
             if (errors) return;
@@ -150,7 +155,7 @@ export default {
 </script>
 
 <style scoped>
-/* 🚀 基础布局与背景 */
+/*  基础布局与背景 */
 .auth-wrapper {
     position: relative;
     width: 100vw;

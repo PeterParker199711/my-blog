@@ -7,7 +7,7 @@ import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 
-// 🚀 核心修复：把自定义渲染器抽离到组件外部，只初始化一次！
+//  核心修复：把自定义渲染器抽离到组件外部，只初始化一次！
 const renderer = new marked.Renderer();
 
 // 1. 拦截标题，强制生成与右侧目录一致的安全 ID
@@ -57,7 +57,7 @@ renderer.code = (...args) => {
     `;
 };
 
-// 🚀 核心修复：使用 marked.use() 让自定义渲染器在全局生效
+//  核心修复：使用 marked.use() 让自定义渲染器在全局生效
 marked.use({ renderer });
 
 export default {

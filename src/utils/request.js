@@ -1,66 +1,85 @@
 // src/utils/request.js
 import axios from 'axios';
 import { Message } from '@arco-design/web-vue';
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
-// 1. 创建 Axios 实例
+
 const service = axios.create({
-    // baseURL 会自动读取上面环境变量配置的地址
-    baseURL: VITE_API_BASE_URL,
-    timeout: 10000, // 超时时间 10秒
+    baseURL: '/api',
+    timeout: 10000,
 });
 
-// 2. 请求拦截器 (Request Interceptor)
+// 标记是否正在刷新 Token
+let isRefreshing = false;
+
+// 请求拦截器
 service.interceptors.request.use(
     (config) => {
-        // 在发送请求之前做些什么：比如携带 Token
-        const token = localStorage.getItem('blog_token');
+        const token = localStorage.getItem('accessToken');
         if (token) {
-            // 标准的 Bearer Token 格式
             config.headers['Authorization'] = `Bearer ${token}`;
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
-// 3. 响应拦截器 (Response Interceptor)
+// 响应拦截器
 service.interceptors.response.use(
     (response) => {
-        // 后端通常会包装一层统一结构，如 { code: 200, data: {...}, msg: "success" }
         const res = response.data;
-
-        // 假设你们约定的成功状态码是 200 或 0
-        if (res.code !== 200 && res.code !== 0) {
-            // 统一报错
-            Message.error(res.message || res.msg || '服务器开小差了');
-
-            // 401 代表 Token 过期或未登录
-            if (res.code === 401) {
-                localStorage.removeItem('blog_token');
-                window.location.href = '/login'; // 强制踢回登录页
-            }
+        // 后端 R.ok() 通常 code 为 200
+        if (res.code !== 200) {
+            Message.error(res.message || '系统错误');
             return Promise.reject(new Error(res.message || 'Error'));
-        } else {
-            // 剥离外层壳，直接返回核心数据
-            return res.data;
         }
+        return res.data; // 直接返回 TokenVO 或 UserInfoVO
     },
-    (error) => {
-        // 处理 HTTP 网络层面错误 (如 404, 500)
-        let errMsg = '网络异常，请稍后重试';
-        if (error.response) {
-            switch (error.response.status) {
-                case 401: errMsg = '登录已过期，请重新登录'; break;
-                case 403: errMsg = '您没有权限访问该资源'; break;
-                case 404: errMsg = '请求的接口不存在'; break;
-                case 500: errMsg = '服务器内部错误'; break;
+    async (error) => {
+        const { response, config } = error;
+
+        // 当返回 401 且不是刷新接口本身报错时
+        if (response && response.status === 401 && !config.url.includes('/auth/refresh')) {
+            const refreshToken = localStorage.getItem('refreshToken');
+
+            if (!refreshToken) {
+                //连刷新 Token 都没有，直接去登录
+                handleLogout();
+                return Promise.reject(error);
+            }
+
+            if (!isRefreshing) {
+                isRefreshing = true;
+                try {
+                    const res = await axios.post('/api/auth/refresh', refreshToken, {
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    if (res.data.code === 200) {
+                        const { accessToken, refreshToken: newRefreshToken } = res.data.data;
+
+                        // 更新本地存储
+                        localStorage.setItem('accessToken', accessToken);
+                        localStorage.setItem('refreshToken', newRefreshToken);
+
+                        // 让原始请求带上新 Token 重试
+                        config.headers['Authorization'] = `Bearer ${accessToken}`;
+                        isRefreshing = false;
+                        return service(config);
+                    }
+                } catch (refreshError) {
+                    handleLogout();
+                } finally {
+                    isRefreshing = false;
+                }
             }
         }
-        Message.error(errMsg);
+
+        Message.error(error.response?.data?.message || '网络异常');
         return Promise.reject(error);
     }
 );
+
+function handleLogout() {
+    localStorage.clear();
+    window.location.href = '/login';
+}
 
 export default service;

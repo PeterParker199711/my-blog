@@ -3,9 +3,9 @@
         <a-card :bordered="false" class="glass-card category-card">
             <template #title><span class="panel-label">文章分类</span></template>
             <a-space wrap>
-                <div v-for="cat in categories" :key="cat" :class="['custom-tag', { active: currentCategory === cat }]"
-                    @click="changeCategory(cat)">
-                    {{ cat }}
+                <div v-for="cat in categories" :key="cat.id" :class="{ active: activeCategory === cat.name }"
+                    @click="selectCategory(cat.name)">
+                    {{ cat.name }}
                 </div>
             </a-space>
         </a-card>
@@ -25,18 +25,20 @@
 export default {
     name: 'BlogLeftSider',
     props: {
-        articles: { type: Array, default: () => [] }
+        articles: { type: Array, default: () => [] },
+        categories: { type: Array, default: () => [] },
+        activeId: { type: [Number, String], default: null }
     },
     data() {
         return {
-            categories: ['全部', '前端开发', '生活随笔', '设计资源'],
-            currentCategory: '全部'
+            // 这里的选中状态逻辑保持不变
+            activeCategory: '全部'
         }
     },
     methods: {
-        changeCategory(cat) {
-            this.currentCategory = cat;
-            this.$emit('category-change', cat);
+        selectCategory(name) {
+            this.activeCategory = name;
+            this.$emit('category-change', name);
         }
     }
 }
@@ -50,6 +52,7 @@ export default {
     border-radius: 16px;
     margin-bottom: 20px;
 }
+
 
 .panel-label {
     color: rgba(255, 255, 255, 0.5);
@@ -102,19 +105,19 @@ export default {
     line-height: 1.4;
 }
 
-/* 🚀 Vue Transition Group 魔法动画 */
-/* 🚀 Vue 3 Transition Group 魔法动画 */
+/*  Vue Transition Group 魔法动画 */
+/*  Vue 3 Transition Group 魔法动画 */
 .list-fade-enter-active,
 .list-fade-leave-active {
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* 🚀 补充平滑移动的过渡 */
+/*  补充平滑移动的过渡 */
 .list-fade-move {
     transition: transform 0.4s ease;
 }
 
-/* 🚀 注意这里：enter 变成了 enter-from */
+/*  注意这里：enter 变成了 enter-from */
 .list-fade-enter-from,
 .list-fade-leave-to {
     opacity: 0;
@@ -129,5 +132,4 @@ export default {
 .list-container {
     position: relative;
 }
-
 </style>
